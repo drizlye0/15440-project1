@@ -1,37 +1,53 @@
 package main
 
-import "os"
+import (
+	"os"
+	"syscall"
+)
 
 func open(name string) *RPCResponse {
 	fd, err := os.Open(name)
-	defer fd.Close()
-
 	if err != nil {
-		return &RPCResponse{Value: nil, Error: err}
+		return &RPCResponse{error: err}
 	}
 
-	return &RPCResponse{Value: fd, Error: nil}
+	defer fd.Close()
+
+	dupFd, err := syscall.Dup(int(fd.Fd()))
+	if err != nil {
+		return &RPCResponse{error: err}
+	}
+
+	return &RPCResponse{fd: uintptr(dupFd)}
+}
+
+func close(sysFd uintptr, name string) *RPCResponse {
+	fd := os.NewFile(sysFd, name)
+	err := fd.Close()
+	if err != nil {
+		return &RPCResponse{error: err}
+	}
+
+	return &RPCResponse{}
 }
 
 func read(name string) *RPCResponse {
-	content, err := os.ReadFile(name)
+	r, err := os.ReadFile(name)
 	if err != nil {
-		return &RPCResponse{Value: nil, Error: err}
+		return &RPCResponse{error: err}
 	}
 
-	return &RPCResponse{Value: content, Error: err}
+	return &RPCResponse{read: r}
 }
 
-func write(name string, data []byte) *RPCResponse {
-	fd, err := os.Open(name)
+func write(sysFd uintptr, name string, data []byte) *RPCResponse {
+	fd := os.NewFile(sysFd, name)
+	defer fd.Close()
+	w, err := fd.Write(data)
+
 	if err != nil {
-		return &RPCResponse{Value: nil, Error: err}
+		return &RPCResponse{error: err}
 	}
 
-	written, err := fd.Write(data)
-	if err != nil {
-		return &RPCResponse{Value: nil, Error: err}
-	}
-
-	return &RPCResponse{Value: written, Error: nil}
+	return &RPCResponse{written: w}
 }
