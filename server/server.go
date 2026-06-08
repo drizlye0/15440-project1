@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"net"
-	"strings"
 )
 
 type TCPServer struct {
@@ -52,26 +50,21 @@ func (srv *TCPServer) handleConn(conn net.Conn) {
 
 	srv.conns = append(srv.conns, conn)
 
-	reader := bufio.NewReader(conn)
-
-	message, err := reader.ReadString('\n')
-	message = strings.TrimSpace(message)
-	log.Println(message)
-
-	if err != nil {
-		log.Printf("Failed to read conn message %e", err)
+	var res *RPCResponse
+	req := handleMessage(&conn)
+	if req == nil {
+		res = &RPCResponse{Value: nil, Error: fmt.Errorf("Malformed message")}
+		sendResponse(&conn, res)
 		return
 	}
 
-	var response = "\n"
-	if message == "foo" {
-		response = foo()
+	res = handleRequest(req)
+	if res == nil {
+		res = &RPCResponse{Value: nil, Error: fmt.Errorf("Failed to handle request")}
+		sendResponse(&conn, res)
 	}
 
-	_, err = conn.Write([]byte(response))
-	if err != nil {
-		log.Printf("Failed to send response: %e", err)
-	}
+	sendResponse(&conn, res)
 }
 
 func foo() string {
