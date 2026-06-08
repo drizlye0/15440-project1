@@ -53,14 +53,14 @@ func (srv *TCPServer) handleConn(conn net.Conn) {
 	var res *RPCResponse
 	req := handleMessage(&conn)
 	if req == nil {
-		res = &RPCResponse{Value: nil, Error: fmt.Errorf("Malformed message")}
+		res = &RPCResponse{error: fmt.Errorf("Malformed message")}
 		sendResponse(&conn, res)
 		return
 	}
 
 	res = handleRequest(req)
 	if res == nil {
-		res = &RPCResponse{Value: nil, Error: fmt.Errorf("Failed to handle request")}
+		res = &RPCResponse{error: fmt.Errorf("Failed to handle request")}
 		sendResponse(&conn, res)
 	}
 
