@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"log"
 	"net"
 )
@@ -27,7 +28,26 @@ func handleMessage(conn *net.Conn) *RPCRequest {
 }
 
 func handleRequest(req *RPCRequest) *RPCResponse {
-	return nil
+	signature := req.callSignature
+	if signature == "" {
+		return &RPCResponse{error: fmt.Errorf("Invalid call signature")}
+	}
+
+	var res *RPCResponse
+	switch signature {
+	case "open":
+		res = open(req.fileName)
+	case "close":
+		res = close(req.sysFd, req.fileName)
+	case "read":
+		res = read(req.fileName)
+	case "write":
+		res = write(req.sysFd, req.fileName, req.data)
+	default:
+		res = &RPCResponse{error: fmt.Errorf("Invalid call signature")}
+	}
+
+	return res
 }
 
 func sendResponse(conn *net.Conn, res *RPCResponse) {
