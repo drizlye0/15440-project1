@@ -3,26 +3,32 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"log"
 )
 
 type RPCRequest struct {
-	id int
 	callSignature string
-	paramaters int
+	fileName      string
 }
 
-func (m *RPCRequest) encode() bytes.Buffer {
-	format := fmt.Sprintf("%d %s %d", m.id, m.callSignature, m.paramaters)
-	b := bytes.Buffer{}
-	b.Write([]byte(format))
-	return b
+func (r *RPCRequest) encode() bytes.Buffer {
+	format := fmt.Sprintf("%s %s", r.callSignature, r.fileName)
+	buf := bytes.Buffer{}
+	buf.Write([]byte(format))
+	return buf
 }
 
-func decodeRPCRequest(b bytes.Buffer) *RPCRequest {
-	parts := bytes.Split(b.Bytes(), []byte(" "))
-	for _, part := range parts {
-		fmt.Printf("%s\n", part)
+func decodeRPCRequest(b *bytes.Buffer) *RPCRequest {
+	cleanedBytes := bytes.TrimSpace(b.Bytes())
+	parts := bytes.Split(cleanedBytes, []byte(" "))
+
+	if len(parts) < 2 {
+		log.Println("Failed to parse request: invalid format or missing arguments")
+		return nil
 	}
 
-	return nil
+	return &RPCRequest{
+		callSignature: string(parts[0]),
+		fileName:      string(parts[1]),
+	}
 }
