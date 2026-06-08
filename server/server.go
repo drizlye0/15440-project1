@@ -42,7 +42,7 @@ func (srv *TCPServer) Listen() {
 func (srv *TCPServer) handleConn(conn net.Conn) {
 	defer conn.Close()
 	defer func() {
-		srv.conns = srv.conns[:len(srv.conns) - 1]
+		srv.conns = srv.conns[:len(srv.conns)-1]
 	}()
 
 	if len(srv.conns) >= srv.maxConn {
