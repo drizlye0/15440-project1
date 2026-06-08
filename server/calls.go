@@ -18,7 +18,7 @@ func open(name string) *RPCResponse {
 		return &RPCResponse{error: err}
 	}
 
-	return &RPCResponse{fd: uintptr(dupFd)}
+	return &RPCResponse{sysFd: uintptr(dupFd)}
 }
 
 func close(sysFd uintptr, name string) *RPCResponse {
