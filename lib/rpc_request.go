@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
 	"bytes"
@@ -9,21 +9,21 @@ import (
 )
 
 type RPCRequest struct {
-	callSignature string
-	sysFd         uintptr
-	fileName      string
-	data          []byte
+	CallSignature string
+	SysFd         uintptr
+	FileName      string
+	Data          []byte
 }
 
-func (r *RPCRequest) encode() bytes.Buffer {
-	hexData := hex.EncodeToString(r.data)
-	format := fmt.Sprintf("%s %d %s %s", r.callSignature, r.sysFd, r.fileName, hexData)
+func (r *RPCRequest) Encode() bytes.Buffer {
+	hexData := hex.EncodeToString(r.Data)
+	format := fmt.Sprintf("%s %d %s %s", r.CallSignature, r.SysFd, r.FileName, hexData)
 	buf := bytes.Buffer{}
 	buf.Write([]byte(format))
 	return buf
 }
 
-func decodeRPCRequest(b *bytes.Buffer) *RPCRequest {
+func DecodeRPCRequest(b *bytes.Buffer) *RPCRequest {
 	cleanedBytes := bytes.TrimSpace(b.Bytes())
 	parts := bytes.Split(cleanedBytes, []byte(" "))
 
@@ -46,9 +46,9 @@ func decodeRPCRequest(b *bytes.Buffer) *RPCRequest {
 	}
 
 	return &RPCRequest{
-		callSignature: string(parts[0]),
-		sysFd:         uintptr(ptr),
-		fileName:      string(parts[2]),
-		data:          decodedData,
+		CallSignature: string(parts[0]),
+		SysFd:         uintptr(ptr),
+		FileName:      string(parts[2]),
+		Data:          decodedData,
 	}
 }
