@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+
+	"github.com/drizlye0/15440-project1/lib"
 )
 
 type TCPServer struct {
@@ -50,17 +52,17 @@ func (srv *TCPServer) handleConn(conn net.Conn) {
 
 	srv.conns = append(srv.conns, conn)
 
-	var res *RPCResponse
+	var res *lib.RPCResponse
 	req := handleMessage(&conn)
 	if req == nil {
-		res = &RPCResponse{error: fmt.Errorf("Malformed message")}
+		res = &lib.RPCResponse{Error: fmt.Errorf("Malformed message")}
 		sendResponse(&conn, res)
 		return
 	}
 
 	res = handleRequest(req)
 	if res == nil {
-		res = &RPCResponse{error: fmt.Errorf("Failed to handle request")}
+		res = &lib.RPCResponse{Error: fmt.Errorf("Failed to handle request")}
 		sendResponse(&conn, res)
 	}
 

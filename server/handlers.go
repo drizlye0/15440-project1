@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"log"
 	"net"
+
+	"github.com/drizlye0/15440-project1/lib"
 )
 
-func handleMessage(conn *net.Conn) *RPCRequest {
+func handleMessage(conn *net.Conn) *lib.RPCRequest {
 	reader := bufio.NewReader(*conn)
 
 	data, err := reader.ReadBytes(byte('\n'))
@@ -18,7 +20,7 @@ func handleMessage(conn *net.Conn) *RPCRequest {
 	}
 
 	buf := bytes.NewBuffer(data)
-	req := decodeRPCRequest(buf)
+	req := lib.DecodeRPCRequest(buf)
 
 	if req == nil {
 		return nil
@@ -27,31 +29,31 @@ func handleMessage(conn *net.Conn) *RPCRequest {
 	return req
 }
 
-func handleRequest(req *RPCRequest) *RPCResponse {
-	signature := req.callSignature
+func handleRequest(req *lib.RPCRequest) *lib.RPCResponse {
+	signature := req.CallSignature
 	if signature == "" {
-		return &RPCResponse{error: fmt.Errorf("Invalid call signature")}
+		return &lib.RPCResponse{Error: fmt.Errorf("Invalid call signature")}
 	}
 
-	var res *RPCResponse
+	var res *lib.RPCResponse
 	switch signature {
 	case "open":
-		res = open(req.fileName)
+		res = open(req.FileName)
 	case "close":
-		res = close(req.sysFd, req.fileName)
+		res = close(req.SysFd, req.FileName)
 	case "read":
-		res = read(req.fileName)
+		res = read(req.FileName)
 	case "write":
-		res = write(req.sysFd, req.fileName, req.data)
+		res = write(req.SysFd, req.FileName, req.Data)
 	default:
-		res = &RPCResponse{error: fmt.Errorf("Invalid call signature")}
+		res = &lib.RPCResponse{Error: fmt.Errorf("Invalid call signature")}
 	}
 
 	return res
 }
 
-func sendResponse(conn *net.Conn, res *RPCResponse) {
-	_, err := (*conn).Write(res.encode().Bytes())
+func sendResponse(conn *net.Conn, res *lib.RPCResponse) {
+	_, err := (*conn).Write(res.Encode().Bytes())
 	if err != nil {
 		log.Printf("Failed to send response: %v", err)
 		return
