@@ -2,7 +2,6 @@ package lib
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -15,12 +14,13 @@ type RPCRequest struct {
 	Data          []byte
 }
 
-func (r *RPCRequest) Encode() bytes.Buffer {
+func (r *RPCRequest) Encode() *bytes.Buffer {
 	hexData := hex.EncodeToString(r.Data)
-	format := fmt.Sprintf("%s %d %s %s", r.CallSignature, r.SysFd, r.FileName, hexData)
+	format := fmt.Sprintf("%s %d %s %s\n", r.CallSignature, r.SysFd, r.FileName, hexData)
+	fmt.Println(format)
 	buf := bytes.Buffer{}
 	buf.Write([]byte(format))
-	return buf
+	return &buf
 }
 
 func DecodeRPCRequest(b *bytes.Buffer) *RPCRequest {
@@ -32,14 +32,10 @@ func DecodeRPCRequest(b *bytes.Buffer) *RPCRequest {
 		return nil
 	}
 
-	ptrArr := parts[1]
-	for i := 0; i < 8-len(ptrArr); i++ {
-		ptrArr = append([]byte{0x0, 0x0}, ptrArr...)
-	}
-	ptr := binary.BigEndian.Uint64(ptrArr)
+	sysFd := ByteArrToPtr(parts[1])
 
-	hexStr := string(parts[3])
-	decodedData, err := hex.DecodeString(hexStr)
+	hexData := string(parts[3])
+	data, err := hex.DecodeString(hexData)
 	if err != nil {
 		log.Printf("Failed to decode hex string data: %v\n", err)
 		return nil
@@ -47,8 +43,8 @@ func DecodeRPCRequest(b *bytes.Buffer) *RPCRequest {
 
 	return &RPCRequest{
 		CallSignature: string(parts[0]),
-		SysFd:         uintptr(ptr),
+		SysFd:         sysFd,
 		FileName:      string(parts[2]),
-		Data:          decodedData,
+		Data:          data,
 	}
 }
