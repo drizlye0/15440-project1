@@ -2,24 +2,23 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/drizlye0/15440-project1/lib"
 )
 
 func main() {
-	fileName := "hello.txt"
-	sysFd, err := lib.Open(fileName)
+	sysFd, err := lib.Open("hello.txt")
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		log.Panic("Open request failed")
 	}
 
-	fmt.Println(sysFd)
-	// req := &lib.RPCRequest{
-	// 	CallSignature: "open",
-	// 	FileName: "hello.txt",
-	// }
+	fmt.Println("Remote File Descritptor: %d", sysFd)
 
-	// buf := req.Encode()
-	// originalReq := lib.DecodeRPCRequest(buf)
-	// fmt.Println(originalReq)
+	err = lib.Close(sysFd, "hello.txt")
+	if err != nil {
+		log.Panic("Failed to close remote file")
+	}
+
+	fmt.Println("Closed file")
 }
