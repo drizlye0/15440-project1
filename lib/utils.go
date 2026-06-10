@@ -1,21 +1,19 @@
 package lib
 
 import (
-	"encoding/binary"
 	"fmt"
+	"strconv"
 )
 
-func ByteArrToPtr(arr []byte) uintptr {
-	if len(arr) <= 1 {
-		return 0
+func ByteArrToPtr(arr []byte) (uintptr, error) {
+	if len(arr) == 0 {
+		return 0, fmt.Errorf("byte array is empty")
 	}
 
-	fmt.Println(len(arr))
-
-	for i := 0; i < 8-len(arr); i++ {
-		arr = append([]byte{0x0, 0x0}, arr...)
+	val, err := strconv.ParseUint(string(arr), 10, 0)
+	if err != nil {
+		return 0, fmt.Errorf("Failed to parse to ptr")
 	}
 
-	ptr := binary.BigEndian.Uint64(arr)
-	return uintptr(ptr)
+	return uintptr(val), nil
 }
