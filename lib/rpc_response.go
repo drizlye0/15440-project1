@@ -7,6 +7,13 @@ import (
 	"strconv"
 )
 
+const (
+	RES_SYSFD int = iota
+	RES_READ
+	RES_WRITTEN
+	RES_ERROR
+)
+
 type RPCResponse struct {
 	SysFd   uintptr
 	Read    []byte
@@ -26,37 +33,32 @@ func DecodeRPCResponse(b *bytes.Buffer) *RPCResponse {
 	cleanedBytes := bytes.TrimSpace(b.Bytes())
 	parts := bytes.Split(cleanedBytes, []byte(" "))
 
-	sysFd := ByteArrToPtr(parts[0])
-	fmt.Println(string(parts[2]))
-	written, err := strconv.Atoi(string(parts[2]))
-	if err != nil {
-		return &RPCResponse{Error: err}
+	// default response
+	res := &RPCResponse{
+		SysFd:   0,
+		Read:    []byte{},
+		Written: 0,
+		Error:   nil,
 	}
 
-	var resErr error = nil
-	if string(parts[3]) != "<nil>" {
-		resErr = fmt.Errorf(string(parts[3]))
+	sysFd, err := ByteArrToPtr(parts[RES_SYSFD])
+	if err == nil {
+		res.SysFd = sysFd
 	}
 
-	if len(parts[1]) <= 2 {
-		return &RPCResponse{
-			SysFd: sysFd,
-			Read: []byte{},
-			Written: int(written),
-			Error: resErr,
-		}
+	read, err := hex.DecodeString(string(parts[RES_READ]))
+	if err == nil {
+		res.Read = read
 	}
 
-	fmt.Printf("decode string: %s %d\n", string(parts[1]), len(parts[1]))
-	read, err := hex.DecodeString(string(parts[1]))
-	if err != nil {
-		return &RPCResponse{Error: fmt.Errorf("Failed to decode read hex data")}
+	written, err := strconv.ParseInt(string(parts[RES_WRITTEN]), 10, 0)
+	if err == nil {
+		res.Written = int(written)
 	}
 
-	return &RPCResponse{
-		SysFd:   sysFd,
-		Read:    read,
-		Written: int(written),
-		Error:   resErr,
+	if string(parts[RES_ERROR]) != "<nil>" {
+		res.Error = fmt.Errorf("%v", string(parts[RES_ERROR]))
 	}
+
+	return res
 }

@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"log"
 )
 
-var CALL_SIGNATURE int = 0
-var SYS_FD int = 1
-var FILE_NAME int = 2
-var DATA int = 3
+const (
+	REQ_SIGNATURE int = iota
+	REQ_SYSFD
+	REQ_FILENAME
+	REQ_DATA
+)
 
 type RPCRequest struct {
 	CallSignature string
@@ -25,7 +28,7 @@ func (r *RPCRequest) Encode() *bytes.Buffer {
 	}
 
 	format := fmt.Sprintf("%s %d %s %s\n", r.CallSignature, r.SysFd, r.FileName, hexData)
-	fmt.Println(format)
+	fmt.Printf("Request encode format: %s", format)
 	buf := bytes.Buffer{}
 	buf.Write([]byte(format))
 	return &buf
@@ -35,87 +38,63 @@ func DecodeRPCRequest(b *bytes.Buffer) *RPCRequest {
 	cleanedBytes := bytes.TrimSpace(b.Bytes())
 	parts := bytes.Split(cleanedBytes, []byte(" "))
 
-	signature := string(parts[CALL_SIGNATURE])
-	fileName := string(parts[FILE_NAME])
-	sysFd := ByteArrToPtr(parts[SYS_FD])
-	hexData := string(parts[DATA])
+	signature := string(parts[REQ_SIGNATURE])
+	switch signature {
+	case "open":
+		return newOpenReadRequest(signature, parts[REQ_FILENAME])
 
-	if hexData == "-" {
-		return &RPCRequest{
-			CallSignature: signature,
-			FileName:      fileName,
-			SysFd:         sysFd,
-			Data:          []byte{},
-		}
+	case "close":
+		return newCloseRequest(signature, parts[REQ_SYSFD], parts[REQ_FILENAME])
+
+	case "read":
+		return newOpenReadRequest(signature, parts[REQ_FILENAME])
+
+	case "write":
+		return newWriteRequest(signature, parts[REQ_SYSFD], parts[REQ_FILENAME], parts[REQ_DATA])
+
+	default:
+		return nil
 	}
+}
 
-	data, err := hex.DecodeString(hexData)
+func newOpenReadRequest(signature string, fileName []byte) *RPCRequest {
+	return &RPCRequest{
+		CallSignature: signature,
+		FileName:      string(fileName),
+	}
+}
+
+func newCloseRequest(signature string, fdBytes []byte, fileName []byte) *RPCRequest {
+	sysFd, err := ByteArrToPtr(fdBytes)
 	if err != nil {
+		log.Println(err)
 		return nil
 	}
 
 	return &RPCRequest{
 		CallSignature: signature,
-		FileName:      fileName,
 		SysFd:         sysFd,
-		Data:          data,
+		FileName:      string(fileName),
+	}
+}
+
+func newWriteRequest(signature string, fdBytes []byte, fileName []byte, data []byte) *RPCRequest {
+	sysFd, err := ByteArrToPtr(fdBytes)
+	if err != nil {
+		log.Println(err)
+		return nil
 	}
 
-	// if signature == "open" {
-	// 	return &RPCRequest{
-	// 		CallSignature: signature,
-	// 		FileName:      fileName,
-	// 	}
-	// }
+	decodedData, err := hex.DecodeString(string(data))
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
 
-	// if signature == "close" {
-	// 	sysFd := ByteArrToPtr(parts[SYS_FD])
-	// 	return &RPCRequest{
-	// 		CallSignature: signature,
-	// 		SysFd:         sysFd,
-	// 		FileName:      fileName,
-	// 	}
-	// }
-
-	// if signature == "write" {
-	// 	hexData := string(parts[DATA])
-	// 	data, err := hex.DecodeString(hexData)
-	// 	if err != nil {
-	// 		return nil
-	// 	}
-
-	// 	sysFd := ByteArrToPtr(parts[SYS_FD])
-
-	// 	return &RPCRequest{
-	// 		CallSignature: signature,
-	// 		SysFd:         sysFd,
-	// 		FileName:      fileName,
-	// 		Data:          data,
-	// 	}
-	// }
-
-	// if signature == "read" {
-	// 	return &RPCRequest{
-	// 		CallSignature: signature,
-	// 		FileName:      fileName,
-	// 	}
-	// }
-
-	// return nil
-
-	// sysFd := ByteArrToPtr(parts[1])
-
-	// hexData := string(parts[3])
-	// data, err := hex.DecodeString(hexData)
-	// if err != nil {
-	// 	log.Printf("Failed to decode hex string data: %v\n", err)
-	// 	return nil
-	// }
-
-	// return &RPCRequest{
-	// 	CallSignature: string(parts[0]),
-	// 	SysFd:         sysFd,
-	// 	FileName:      string(parts[2]),
-	// 	Data:          data,
-	// }
+	return &RPCRequest{
+		CallSignature: signature,
+		SysFd:         sysFd,
+		FileName:      string(fileName),
+		Data:          decodedData,
+	}
 }
