@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"syscall"
 
@@ -9,7 +8,6 @@ import (
 )
 
 func open(name string) *lib.RPCResponse {
-	fmt.Println(name)
 	fd, err := os.Open(name)
 	if err != nil {
 		return &lib.RPCResponse{Error: err}

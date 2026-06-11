@@ -28,7 +28,6 @@ func (r *RPCRequest) Encode() *bytes.Buffer {
 	}
 
 	format := fmt.Sprintf("%s %d %s %s\n", r.CallSignature, r.SysFd, r.FileName, hexData)
-	fmt.Printf("Request encode format: %s", format)
 	buf := bytes.Buffer{}
 	buf.Write([]byte(format))
 	return &buf
