@@ -40,7 +40,7 @@ func sendRequest(req *RPCRequest) (*RPCResponse, error) {
 	}
 
 	if res.Error != nil {
-		return nil, err
+		return nil, res.Error
 	}
 
 	return res, nil
