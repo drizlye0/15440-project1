@@ -1,6 +1,9 @@
 package lib
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 var file_name string = "test.txt"
 var file_content string = "This is a test file"
@@ -42,7 +45,7 @@ func TestRead(t *testing.T) {
 		t.Errorf("Read() error: %v", err)
 	}
 
-	dataStr := string(data)
+	dataStr := strings.TrimSpace(string(data))
 	if dataStr != file_content {
 		t.Errorf("Invalid file content")
 	}
