@@ -43,7 +43,7 @@ func read(name string) *lib.RPCResponse {
 }
 
 func write(name string, data []byte) *lib.RPCResponse {
-	fd, err := os.OpenFile(name, os.O_WRONLY, 0644)
+	fd, err := os.OpenFile(name, os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return &lib.RPCResponse{Error: err}
 	}
