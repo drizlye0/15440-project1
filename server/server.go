@@ -68,7 +68,3 @@ func (srv *TCPServer) handleConn(conn net.Conn) {
 
 	sendResponse(&conn, res)
 }
-
-func foo() string {
-	return "open read read close \n"
-}
