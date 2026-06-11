@@ -22,8 +22,17 @@ type RPCResponse struct {
 }
 
 func (r *RPCResponse) Encode() *bytes.Buffer {
-	format := fmt.Sprintf("%d %v %d %v\n", r.SysFd, r.Read, r.Written, r.Error)
-	fmt.Println(format)
+	hexRead := "-"
+	if len(r.Read) > 0 {
+		hexRead = hex.EncodeToString(r.Read)
+	}
+
+	errStr := "-"
+	if r.Error != nil {
+		errStr = hex.EncodeToString([]byte(r.Error.Error()))
+	}
+
+	format := fmt.Sprintf("%d %s %d %s\n", r.SysFd, hexRead, r.Written, errStr)
 	buf := bytes.Buffer{}
 	buf.Write([]byte(format))
 	return &buf
@@ -32,6 +41,9 @@ func (r *RPCResponse) Encode() *bytes.Buffer {
 func DecodeRPCResponse(b *bytes.Buffer) *RPCResponse {
 	cleanedBytes := bytes.TrimSpace(b.Bytes())
 	parts := bytes.Split(cleanedBytes, []byte(" "))
+	if len(parts) < 4 {
+		return nil
+	}
 
 	// default response
 	res := &RPCResponse{
@@ -46,9 +58,11 @@ func DecodeRPCResponse(b *bytes.Buffer) *RPCResponse {
 		res.SysFd = sysFd
 	}
 
-	read, err := hex.DecodeString(string(parts[RES_READ]))
-	if err == nil {
-		res.Read = read
+	if string(parts[RES_READ]) != "-" {
+		read, err := hex.DecodeString(string(parts[RES_READ]))
+		if err == nil {
+			res.Read = read
+		}
 	}
 
 	written, err := strconv.ParseInt(string(parts[RES_WRITTEN]), 10, 0)
@@ -56,8 +70,11 @@ func DecodeRPCResponse(b *bytes.Buffer) *RPCResponse {
 		res.Written = int(written)
 	}
 
-	if string(parts[RES_ERROR]) != "<nil>" {
-		res.Error = fmt.Errorf("%v", string(parts[RES_ERROR]))
+	if string(parts[RES_ERROR]) != "-" {
+		errBytes, err := hex.DecodeString(string(parts[RES_ERROR]))
+		if err == nil {
+			res.Error = fmt.Errorf("%s", string(errBytes))
+		}
 	}
 
 	return res
