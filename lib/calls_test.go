@@ -52,9 +52,7 @@ func TestRead(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	sysFd := openTestFile(t)
-
-	lines, err := Write(sysFd, file_name, []byte(write_value))
+	lines, err := Write(file_name, []byte(write_value))
 	if err != nil {
 		t.Errorf("Write() error: %v", err)
 	}

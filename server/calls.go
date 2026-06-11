@@ -42,11 +42,14 @@ func read(name string) *lib.RPCResponse {
 	return &lib.RPCResponse{Read: r}
 }
 
-func write(sysFd uintptr, name string, data []byte) *lib.RPCResponse {
-	fd := os.NewFile(sysFd, name)
+func write(name string, data []byte) *lib.RPCResponse {
+	fd, err := os.OpenFile(name, os.O_WRONLY, 0644)
+	if err != nil {
+		return &lib.RPCResponse{Error: err}
+	}
 	defer fd.Close()
-	w, err := fd.Write(data)
 
+	w, err := fd.WriteString(string(data))
 	if err != nil {
 		return &lib.RPCResponse{Error: err}
 	}

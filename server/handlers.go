@@ -44,7 +44,7 @@ func handleRequest(req *lib.RPCRequest) *lib.RPCResponse {
 	case "read":
 		res = read(req.FileName)
 	case "write":
-		res = write(req.SysFd, req.FileName, req.Data)
+		res = write(req.FileName, req.Data)
 	default:
 		res = &lib.RPCResponse{Error: fmt.Errorf("Invalid call signature")}
 	}

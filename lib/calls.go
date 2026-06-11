@@ -89,10 +89,9 @@ func Read(fileName string) ([]byte, error) {
 	return res.Read, nil
 }
 
-func Write(sysFd uintptr, fileName string, data []byte) (int, error) {
+func Write(fileName string, data []byte) (int, error) {
 	req := &RPCRequest{
 		CallSignature: "write",
-		SysFd:         sysFd,
 		FileName:      fileName,
 		Data:          data,
 	}
