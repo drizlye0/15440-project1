@@ -9,7 +9,7 @@ build:
 	go build -o ./bin/client ./client
 
 test:
-	go test ./lib
+	go test -v -race -count=1 ./lib
 
 # Target to run all Go files in the server directory
 server:
